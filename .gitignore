@@ -1,0 +1,39 @@
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Large files
+/Testing
+/Training
+*.csv
+
+# Ignore build output
+/build
+/dist
+
+# Ignore environment files
+.env
+secrets.toml
+.env.local
+.env.*.local
+
+# Ignore log files
+*.log
+
+# Ignore OS generated files
+.DS_Store
+Thumbs.db
+
+# Ignore IDE/Editor folders
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Ignore package-lock.json for npm
+package-lock.json
+
+# Ignore yarn.lock for Yarn
+yarn.lock
+
+# Ignore coverage directory
+/coverage

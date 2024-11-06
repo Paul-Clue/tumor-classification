@@ -1,0 +1,6 @@
+tensorflow-macos
+tensorflow-metal
+pandas
+matplotlib
+numpy  # automatically installed as dependency
+seaborn
