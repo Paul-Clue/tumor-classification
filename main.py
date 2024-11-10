@@ -1,4 +1,7 @@
 
+import openai
+from openai import OpenAI
+import base64
 import streamlit as st
 import tensorflow as tf
 from tensorflow.keras.models import load_model
@@ -12,12 +15,16 @@ from tensorflow.keras import regularizers
 
 from tensorflow.keras.optimizers import Adamax
 from tensorflow.keras.metrics import Precision, Recall
-# import google.generativeai as genai
 import PIL.Image
 import os
 # from google.colab import userdata
 from dotenv import load_dotenv
 load_dotenv()
+
+output_dir = "saliency_maps"
+os.makedirs(output_dir, exist_ok=True)
+
+client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 
 def load_model(model_path):
     try:
@@ -54,8 +61,57 @@ def load_model(model_path):
         model.load_weights(model_path)
         return model
 
-output_dir = "saliency_maps"
-os.makedirs(output_dir, exist_ok=True)
+  #section ai
+# genai.configure(api_key= os.getenv('Google_API_KEY'))
+
+
+def generate_explanation(model, model_prediction, confidence):
+
+  prompt = f""" 
+  You are an expert neurologist analyzing a brain tumor MRI scan with an overlaid saliency map. This map highlights in light cyan the areas the deep learning model focused on to classify the brain tumor. The model has classified the tumor as '{model_prediction}' with a confidence level of {confidence*100}%.
+
+  In your analysis:
+  - Identify the specific brain regions in the MRI that the model is concentrating on, based on the light cyan areas in the saliency map, and describe any significant anatomical landmarks or structures that fall within these highlighted regions.
+  - Discuss plausible reasons why the model focused on these specific regions for the given classification, considering the typical tumor characteristics and growth patterns associated with glioma, meningioma, pituitary tumors, or no tumor.
+  - Offer an insight into how the highlighted areas might correlate with the model's predicted tumor type.
+
+  Do not mention the model at all in your explanation.
+  Do not mention the work 'model' in your explanation.
+
+  Keep your explanation concise and limited to 4 sentences. Ensure clarity and precision in your analysis by verifying each step logically.
+    """
+
+  # img = PIL.Image.open(img_path)
+  image_path = os.path.join(output_dir, uploaded_file.name)
+  with open(image_path, "rb") as image_file:
+        encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
+
+  # model = genai.GenerativeModel(model_name= "gemini-1.5-flash")
+  # response = model.generate_context([prompt, img])
+
+  # return response.text
+
+  response = client.chat.completions.create(
+        model="gpt-4o",
+        # model="gpt-4-vision-preview",
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt},
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:image/jpeg;base64,{encoded_image}"
+                        }
+                    }
+                ]
+            }
+        ],
+        # max_tokens=300
+    )
+    
+  return response.choices[0].message.content
 
 def generate_saliency_map(model, img_array, class_index, img_size):
   with tf.GradientTape() as tape:
@@ -134,6 +190,7 @@ def load_xception_model(model_path):
 
 st.title("Brain Tumor Classification")
 
+# Upload Image
 st.write("Upload an image of a brain MRI scan to classify the type of tumor.")
 
 uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
@@ -169,11 +226,89 @@ if uploaded_file is not None:
   for label, prob in zip(labels, predictions[0]):
     st.write(f"{label}: {prob:.4f}")
 
+  # Generate saliency map
   saliency_map = generate_saliency_map(model, img_array, class_index, img_size)
+
+  # Save saliency map
+  # saliency_map_path = f"saliency_maps/{uploaded_file.name}"
+  # cv2.imwrite(saliency_map_path, cv2.cvtColor(saliency_map, cv2.COLOR_RGB2BGR))
 
   col1, col2 = st.columns(2)
   with col1:
     st.image(uploaded_file, caption="Uploaded Image", use_container_width=True)
   with col2:
     st.image(saliency_map, caption="Saliency Map", use_container_width=True)
+
+  st.write("## Classification Results:")
+
+  result_container = st.container()
+  result_container = st.container()
+  result_container.markdown(
+    f""" 
+    <div style="background-color: #000000; color: #ffffff; padding: 30px; border-radius: 15px">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="flex: 1; text-align: center;">
+          <h3 style="color: #ffffff; margin-bottom: 10px; font-size: 20px;">Prediction</h3>
+          <p style="font-size: 36px; font-weight: 800; color: #FF0000; margin: 0;">
+            {result}
+          </p>
+        </div>
+        <div style="width: 2px; height: 80px; background-color: #ffffff; margin: 0 20px;"></div>
+        <div style="flex: 1; text-align: center;">
+          <h3 style="color: #ffffff; margin-bottom: 10px; font-size: 20px;">Confidence</h3>
+          <p style="font-size: 36px; font-weight: 800; color: #2196F3; margin: 0">
+            {predictions[0][class_index]:.4%}
+          </p>
+        </div>
+        
+      </div>
+    </div>
+    """,
+    unsafe_allow_html= True
+  )
+
+  # Prepare data for Plotly chart
+  probabilities = predictions[0]
+  sorted_indices = np.argsort(probabilities)[::-1]
+  sorted_labels = [labels[i] for i in sorted_indices]
+  sorted_probabilities = probabilities[sorted_indices]
+
+  # Create a Plotly chart
+  fig = go.Figure(go.Bar(
+  x=sorted_probabilities,
+  y=sorted_labels,
+  orientation= 'h',
+  marker_color=['red' if label == result else 'blue' for label in sorted_labels]
+  ))
+
+  # Customize the chart layout
+  fig.update_layout(
+  title='Probabilities for each class',
+  xaxis_title='Probability',
+  yaxis_title='Class',
+  height= 400,
+  width=600,
+  yaxis=dict(autorange= 'reversed')
+  )
+
+  # Add value labels to the bars
+  for i, prob in enumerate(sorted_probabilities):
+    fig.add_annotation(
+      x=prob,
+      y=i,
+      text=f'{prob:.4f}',
+      showarrow= False,
+      xanchor='left',
+      xshift=5
+    )
+
+  # Display the Plotly chart
+  st.plotly_chart(fig)
+
+  saliency_map_path = f'saliency_maps/{uploaded_file.name}'
+
+  explanation = generate_explanation(saliency_map_path, result, predictions[0][class_index])
+
+  st.write("## Explanation:")
+  st.write(explanation)
 
