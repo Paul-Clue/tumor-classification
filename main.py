@@ -12,12 +12,10 @@ import cv2
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout, Flatten, Conv2D, MaxPooling2D
 from tensorflow.keras import regularizers
-
 from tensorflow.keras.optimizers import Adamax
 from tensorflow.keras.metrics import Precision, Recall
 import PIL.Image
 import os
-# from google.colab import userdata
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -61,10 +59,6 @@ def load_model(model_path):
         model.load_weights(model_path)
         return model
 
-  #section ai
-# genai.configure(api_key= os.getenv('Google_API_KEY'))
-
-
 def generate_explanation(model, model_prediction, confidence):
 
   prompt = f""" 
@@ -86,11 +80,6 @@ def generate_explanation(model, model_prediction, confidence):
   with open(image_path, "rb") as image_file:
         encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
 
-  # model = genai.GenerativeModel(model_name= "gemini-1.5-flash")
-  # response = model.generate_context([prompt, img])
-
-  # return response.text
-
   response = client.chat.completions.create(
         model="gpt-4o",
         # model="gpt-4-vision-preview",
@@ -108,7 +97,6 @@ def generate_explanation(model, model_prediction, confidence):
                 ]
             }
         ],
-        # max_tokens=300
     )
     
   return response.choices[0].message.content
@@ -228,10 +216,6 @@ if uploaded_file is not None:
 
   # Generate saliency map
   saliency_map = generate_saliency_map(model, img_array, class_index, img_size)
-
-  # Save saliency map
-  # saliency_map_path = f"saliency_maps/{uploaded_file.name}"
-  # cv2.imwrite(saliency_map_path, cv2.cvtColor(saliency_map, cv2.COLOR_RGB2BGR))
 
   col1, col2 = st.columns(2)
   with col1:

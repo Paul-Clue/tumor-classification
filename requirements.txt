@@ -1,6 +1,8 @@
 # Core ML/DL packages
 tensorflow==2.16.2
-tensorflow-macos==2.16.2  # For Mac users
+# tensorflow-macos==2.16.2  # For Mac users
+tensorflow-macos==2.16.2; platform_system == "Darwin"  # For MacOS
+tensorflow==2.16.2; platform_system != "Darwin"        # For other platforms
 tensorflow-metal==1.1.0   # For Mac M1/M2 users
 numpy==1.26.4
 opencv-python>=4.8.0
