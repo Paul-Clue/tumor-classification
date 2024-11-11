@@ -1,6 +1,30 @@
-tensorflow-macos
-tensorflow-metal
-pandas
-matplotlib
-numpy  # automatically installed as dependency
-seaborn
+# Core ML/DL packages
+tensorflow==2.16.2
+tensorflow-macos==2.16.2  # For Mac users
+tensorflow-metal==1.1.0   # For Mac M1/M2 users
+numpy==1.26.4
+opencv-python>=4.8.0
+Pillow>=10.0.0
+
+# API and Vision packages
+openai==1.12.0
+python-dotenv==1.0.0
+
+# Web app
+streamlit>=1.31.0
+pyngrok>=7.0.0
+
+# Data processing
+pandas>=2.0.0
+matplotlib>=3.7.0
+seaborn>=0.12.0
+
+# Model dependencies
+grpcio==1.48.2
+grpcio-status==1.48.2
+protobuf==3.20.3
+h5py>=3.12.0
+
+# Utilities
+tqdm>=4.65.0
+scikit-learn>=1.2.0
