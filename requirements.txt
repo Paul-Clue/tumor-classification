@@ -6,6 +6,8 @@ tensorflow
 # tensorflow-metal==1.1.0; platform_system == "Darwin"   # Only for Mac M1/M2 users
 numpy
 opencv-python
+opencv-python-headless>=4.8.0
+opencv-contrib-python>=4.8.0
 Pillow
 
 # Visualization
