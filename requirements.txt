@@ -8,6 +8,9 @@ numpy
 opencv-python
 Pillow
 
+# Visualization
+plotly
+
 # API and Vision packages
 openai
 python-dotenv
