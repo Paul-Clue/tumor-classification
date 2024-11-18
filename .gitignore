@@ -25,9 +25,9 @@ Thumbs.db
 Miniforge3.sh
 
 # Ignore model files
-# xception_model.weights.h5
-# *.h5
-# *.weights.*
+xception_model.weights.h5
+*.h5
+*.weights.*
 
 # Ignore IDE/Editor folders
 .vscode/
