@@ -1,11 +1,11 @@
 # Core ML/DL packages
-tensorflow==2.16.2
+tensorflow
 # tensorflow-macos==2.16.2  # For Mac users
-tensorflow==2.16.2; platform_system != "Darwin"        # For other platforms
-tensorflow-macos==2.16.2; platform_system == "Darwin"  # For MacOS
-tensorflow-metal==1.1.0; platform_system == "Darwin"   # Only for Mac M1/M2 users
+# tensorflow==2.16.2; platform_system != "Darwin"        # For other platforms
+# tensorflow-macos==2.16.2; platform_system == "Darwin"  # For MacOS
+# tensorflow-metal==1.1.0; platform_system == "Darwin"   # Only for Mac M1/M2 users
 numpy
-opencv-python>=4.8.0
+opencv-python
 Pillow
 
 # API and Vision packages
@@ -13,7 +13,7 @@ openai
 python-dotenv
 
 # Web app
-streamlit>=1.31.0
+streamlit
 pyngrok
 
 # Data processing
@@ -22,8 +22,8 @@ matplotlib
 seaborn
 
 # Model dependencies
-grpcio==1.48.2
-grpcio-status==1.48.2
+grpcio
+grpcio-status
 protobuf==3.20.3
 h5py>=3.12.0
 
