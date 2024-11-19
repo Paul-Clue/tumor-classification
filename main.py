@@ -21,18 +21,42 @@ from dotenv import load_dotenv
 load_dotenv()
 
 def download_model(model_path, url):
+  try:
     if not os.path.exists(model_path):
-        gdown.download(url, model_path, quiet=False)
+      file_id = url.split('/')[-2]
+      direct_url = f'https://drive.google.com/uc?id={file_id}'
+      output = gdown.download(direct_url, model_path, quiet=False)
+      if output is None:
+                st.error(f"Failed to download model from {url}")
+                return False
+      st.success(f"Model downloaded successfully to {model_path}")
+    
+    if os.path.exists(model_path) and os.path.getsize(model_path) > 0:
+            st.write(f"Model file found at {model_path}")
+            return True
+    else:
+        st.error(f"Model file not found or empty at {model_path}")
+        return False
+  
+  except Exception as e:
+      st.error(f"Error downloading model: {str(e)}")
+      return False
 
 @st.cache_resource
 def download_and_load_xception_model(model_path, url):
-  download_model(model_path, url)
-  return load_xception_model(model_path)
+  if download_model(model_path, url):
+    return load_xception_model(model_path)
+  else:
+    st.error("Failed to load Xception model")
+    return None
 
 @st.cache_resource
 def download_and_load_cnn_model(model_path, url):
-  download_model(model_path, url)
-  return load_model(model_path)
+  if download_model(model_path, url):
+    return load_model(model_path)
+  else:
+    st.error("Failed to load CNN model")
+    return None
 
 # download_model("xception_model.weights.h5", "https://drive.google.com/file/d/1hLdpRwEqGolVUtP_zBtvZ_bv8yPo9T9f/view?usp=drive_link")
 # download_model("cnm_model.weights.h5", "https://drive.google.com/file/d/1Y7t3c6FrsV6hRKyEfcC9jnQnxRO_pUMW/view?usp=drive_link")
@@ -209,9 +233,9 @@ if uploaded_file is not None:
   )
 
   if selected_model == "Transfer Learning - Xception":
-    model = download_and_load_xception_model("xception_model.weights.h5", "https://drive.google.com/file/d/1hLdpRwEqGolVUtP_zBtvZ_bv8yPo9T9f/view?usp=drive_link")
+    model = download_and_load_xception_model("xception_model.weights.h5", "https://drive.google.com/file/d/1hLdpRwEqGolVUtP_zBtvZ_bv8yPo9T9f/view?usp=sharing")
   else:
-    model = download_and_load_cnn_model("cnm_model.weights.h5", "https://drive.google.com/file/d/1Y7t3c6FrsV6hRKyEfcC9jnQnxRO_pUMW/view?usp=drive_link")
+    model = download_and_load_cnn_model("cnm_model.weights.h5", "https://drive.google.com/file/d/1Y7t3c6FrsV6hRKyEfcC9jnQnxRO_pUMW/view?usp=sharing")
     img_size = (224, 224)
 
   labels = ['Glioma', 'Meningioma', 'No_tumor', 'Pituitary']
