@@ -22,19 +22,20 @@ load_dotenv()
 
 def download_model(model_path, url):
     if not os.path.exists(model_path):
-        # Replace with your file ID from Google Drive
-        # url = 'https://drive.google.com/uc?id=YOUR_FILE_ID'
         gdown.download(url, model_path, quiet=False)
-# def download_xception_model(model_path):
-#     if not os.path.exists(model_path):
-#         # Replace with your file ID from Google Drive
-#         url = 'https://drive.google.com/uc?id=YOUR_FILE_ID'
-#         gdown.download(url, model_path, quiet=False)
 
-# load_xception_model("xception_model.weights.h5")
-# download_cnn_model("cnm_model.weights.h5")
-download_model("xception_model.weights.h5", "https://drive.google.com/file/d/1hLdpRwEqGolVUtP_zBtvZ_bv8yPo9T9f/view?usp=drive_link")
-download_model("cnm_model.weights.h5", "https://drive.google.com/file/d/1Y7t3c6FrsV6hRKyEfcC9jnQnxRO_pUMW/view?usp=drive_link")
+@st.cache_resource
+def download_and_load_xception_model(model_path, url):
+  download_model(model_path, url)
+  return load_xception_model(model_path)
+
+@st.cache_resource
+def download_and_load_cnn_model(model_path, url):
+  download_model(model_path, url)
+  return load_model(model_path)
+
+# download_model("xception_model.weights.h5", "https://drive.google.com/file/d/1hLdpRwEqGolVUtP_zBtvZ_bv8yPo9T9f/view?usp=drive_link")
+# download_model("cnm_model.weights.h5", "https://drive.google.com/file/d/1Y7t3c6FrsV6hRKyEfcC9jnQnxRO_pUMW/view?usp=drive_link")
 
 output_dir = "saliency_maps"
 os.makedirs(output_dir, exist_ok=True)
@@ -208,10 +209,9 @@ if uploaded_file is not None:
   )
 
   if selected_model == "Transfer Learning - Xception":
-    model = load_xception_model("xception_model.weights.h5")
-    img_size = (299, 299)
+    model = download_and_load_xception_model("xception_model.weights.h5", "https://drive.google.com/file/d/1hLdpRwEqGolVUtP_zBtvZ_bv8yPo9T9f/view?usp=drive_link")
   else:
-    model = load_model("cnm_model.weights.h5")
+    model = download_and_load_cnn_model("cnm_model.weights.h5", "https://drive.google.com/file/d/1Y7t3c6FrsV6hRKyEfcC9jnQnxRO_pUMW/view?usp=drive_link")
     img_size = (224, 224)
 
   labels = ['Glioma', 'Meningioma', 'No_tumor', 'Pituitary']
