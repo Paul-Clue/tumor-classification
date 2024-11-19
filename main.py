@@ -1,5 +1,6 @@
 
 import openai
+import gdown
 from openai import OpenAI
 import base64
 import streamlit as st
@@ -18,6 +19,22 @@ import PIL.Image
 import os
 from dotenv import load_dotenv
 load_dotenv()
+
+def download_model(model_path, url):
+    if not os.path.exists(model_path):
+        # Replace with your file ID from Google Drive
+        # url = 'https://drive.google.com/uc?id=YOUR_FILE_ID'
+        gdown.download(url, model_path, quiet=False)
+# def download_xception_model(model_path):
+#     if not os.path.exists(model_path):
+#         # Replace with your file ID from Google Drive
+#         url = 'https://drive.google.com/uc?id=YOUR_FILE_ID'
+#         gdown.download(url, model_path, quiet=False)
+
+# load_xception_model("xception_model.weights.h5")
+# download_cnn_model("cnm_model.weights.h5")
+download_model("xception_model.weights.h5", "https://drive.google.com/file/d/1hLdpRwEqGolVUtP_zBtvZ_bv8yPo9T9f/view?usp=drive_link")
+download_model("cnm_model.weights.h5", "https://drive.google.com/file/d/1Y7t3c6FrsV6hRKyEfcC9jnQnxRO_pUMW/view?usp=drive_link")
 
 output_dir = "saliency_maps"
 os.makedirs(output_dir, exist_ok=True)

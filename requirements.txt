@@ -5,6 +5,7 @@ tensorflow
 # tensorflow-macos==2.16.2; platform_system == "Darwin"  # For MacOS
 # tensorflow-metal==1.1.0; platform_system == "Darwin"   # Only for Mac M1/M2 users
 numpy
+gdown
 # opencv-python
 opencv-python-headless>=4.8.0
 # opencv-contrib-python
