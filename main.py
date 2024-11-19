@@ -1,4 +1,5 @@
 
+import tempfile
 import openai
 import gdown
 from openai import OpenAI
@@ -227,113 +228,126 @@ uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png
 
 if uploaded_file is not None:
 
-  selected_model = st.radio(
-    "Select Model",
-    ("Transfer Learning - Xception", "Custom CNN")  
-  )
+  with tempfile.NamedTemporaryFile(delete=False, suffix='.jpg') as tmp_file:
+    tmp_file.write(uploaded_file.getvalue())
+    tmp_path = tmp_file.name
 
-  if selected_model == "Transfer Learning - Xception":
-    model = download_and_load_xception_model("xception_model.weights.h5", "https://drive.google.com/file/d/1hLdpRwEqGolVUtP_zBtvZ_bv8yPo9T9f/view?usp=sharing")
-  else:
-    model = download_and_load_cnn_model("cnm_model.weights.h5", "https://drive.google.com/file/d/1Y7t3c6FrsV6hRKyEfcC9jnQnxRO_pUMW/view?usp=sharing")
-    img_size = (224, 224)
+  try:
+    img = image.load_img(tmp_path, target_size=img_size)
+    img_array = image.img_to_array(img)
+    img_array = np.expand_dims(img_array, axis=0)
+    img_array = img_array / 255.0
 
-  labels = ['Glioma', 'Meningioma', 'No_tumor', 'Pituitary']
-  img = image.load_img(uploaded_file, target_size=img_size)
-  img_array = image.img_to_array(img)
-  img_array = np.expand_dims(img_array, axis=0)
-  img_array = img_array / 255.0
-
-  predictions = model.predict(img_array)
-
-  # Get the class with the highest probability
-  class_index = np.argmax(predictions[0])
-  result = labels[class_index]
-
-  st.write(f"Predicted Class: {result}")
-  st.write("Predictions:")
-  for label, prob in zip(labels, predictions[0]):
-    st.write(f"{label}: {prob:.4f}")
-
-  # Generate saliency map
-  saliency_map = generate_saliency_map(model, img_array, class_index, img_size)
-
-  col1, col2 = st.columns(2)
-  with col1:
-    st.image(uploaded_file, caption="Uploaded Image", use_container_width=True)
-  with col2:
-    st.image(saliency_map, caption="Saliency Map", use_container_width=True)
-
-  st.write("## Classification Results:")
-
-  result_container = st.container()
-  result_container = st.container()
-  result_container.markdown(
-    f""" 
-    <div style="background-color: #000000; color: #ffffff; padding: 30px; border-radius: 15px">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <div style="flex: 1; text-align: center;">
-          <h3 style="color: #ffffff; margin-bottom: 10px; font-size: 20px;">Prediction</h3>
-          <p style="font-size: 36px; font-weight: 800; color: #FF0000; margin: 0;">
-            {result}
-          </p>
-        </div>
-        <div style="width: 2px; height: 80px; background-color: #ffffff; margin: 0 20px;"></div>
-        <div style="flex: 1; text-align: center;">
-          <h3 style="color: #ffffff; margin-bottom: 10px; font-size: 20px;">Confidence</h3>
-          <p style="font-size: 36px; font-weight: 800; color: #2196F3; margin: 0">
-            {predictions[0][class_index]:.4%}
-          </p>
-        </div>
-        
-      </div>
-    </div>
-    """,
-    unsafe_allow_html= True
-  )
-
-  # Prepare data for Plotly chart
-  probabilities = predictions[0]
-  sorted_indices = np.argsort(probabilities)[::-1]
-  sorted_labels = [labels[i] for i in sorted_indices]
-  sorted_probabilities = probabilities[sorted_indices]
-
-  # Create a Plotly chart
-  fig = go.Figure(go.Bar(
-  x=sorted_probabilities,
-  y=sorted_labels,
-  orientation= 'h',
-  marker_color=['red' if label == result else 'blue' for label in sorted_labels]
-  ))
-
-  # Customize the chart layout
-  fig.update_layout(
-  title='Probabilities for each class',
-  xaxis_title='Probability',
-  yaxis_title='Class',
-  height= 400,
-  width=600,
-  yaxis=dict(autorange= 'reversed')
-  )
-
-  # Add value labels to the bars
-  for i, prob in enumerate(sorted_probabilities):
-    fig.add_annotation(
-      x=prob,
-      y=i,
-      text=f'{prob:.4f}',
-      showarrow= False,
-      xanchor='left',
-      xshift=5
+    selected_model = st.radio(
+      "Select Model",
+      ("Transfer Learning - Xception", "Custom CNN")  
     )
 
-  # Display the Plotly chart
-  st.plotly_chart(fig)
+    if selected_model == "Transfer Learning - Xception":
+      model = download_and_load_xception_model("xception_model.weights.h5", "https://drive.google.com/file/d/1hLdpRwEqGolVUtP_zBtvZ_bv8yPo9T9f/view?usp=sharing")
+    else:
+      model = download_and_load_cnn_model("cnm_model.weights.h5", "https://drive.google.com/file/d/1Y7t3c6FrsV6hRKyEfcC9jnQnxRO_pUMW/view?usp=sharing")
+      img_size = (224, 224)
 
-  saliency_map_path = f'saliency_maps/{uploaded_file.name}'
+    labels = ['Glioma', 'Meningioma', 'No_tumor', 'Pituitary']
+    img = image.load_img(uploaded_file, target_size=img_size)
+    img_array = image.img_to_array(img)
+    img_array = np.expand_dims(img_array, axis=0)
+    img_array = img_array / 255.0
 
-  explanation = generate_explanation(saliency_map_path, result, predictions[0][class_index])
+    predictions = model.predict(img_array)
 
-  st.write("## Explanation:")
-  st.write(explanation)
+    # Get the class with the highest probability
+    class_index = np.argmax(predictions[0])
+    result = labels[class_index]
+
+    st.write(f"Predicted Class: {result}")
+    st.write("Predictions:")
+    for label, prob in zip(labels, predictions[0]):
+      st.write(f"{label}: {prob:.4f}")
+
+    # Generate saliency map
+    saliency_map = generate_saliency_map(model, img_array, class_index, img_size)
+
+    col1, col2 = st.columns(2)
+    with col1:
+      st.image(uploaded_file, caption="Uploaded Image", use_container_width=True)
+    with col2:
+      st.image(saliency_map, caption="Saliency Map", use_container_width=True)
+
+    st.write("## Classification Results:")
+
+    result_container = st.container()
+    result_container = st.container()
+    result_container.markdown(
+      f""" 
+      <div style="background-color: #000000; color: #ffffff; padding: 30px; border-radius: 15px">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div style="flex: 1; text-align: center;">
+            <h3 style="color: #ffffff; margin-bottom: 10px; font-size: 20px;">Prediction</h3>
+            <p style="font-size: 36px; font-weight: 800; color: #FF0000; margin: 0;">
+              {result}
+            </p>
+          </div>
+          <div style="width: 2px; height: 80px; background-color: #ffffff; margin: 0 20px;"></div>
+          <div style="flex: 1; text-align: center;">
+            <h3 style="color: #ffffff; margin-bottom: 10px; font-size: 20px;">Confidence</h3>
+            <p style="font-size: 36px; font-weight: 800; color: #2196F3; margin: 0">
+              {predictions[0][class_index]:.4%}
+            </p>
+          </div>
+          
+        </div>
+      </div>
+      """,
+      unsafe_allow_html= True
+    )
+
+    # Prepare data for Plotly chart
+    probabilities = predictions[0]
+    sorted_indices = np.argsort(probabilities)[::-1]
+    sorted_labels = [labels[i] for i in sorted_indices]
+    sorted_probabilities = probabilities[sorted_indices]
+
+    # Create a Plotly chart
+    fig = go.Figure(go.Bar(
+    x=sorted_probabilities,
+    y=sorted_labels,
+    orientation= 'h',
+    marker_color=['red' if label == result else 'blue' for label in sorted_labels]
+    ))
+
+    # Customize the chart layout
+    fig.update_layout(
+    title='Probabilities for each class',
+    xaxis_title='Probability',
+    yaxis_title='Class',
+    height= 400,
+    width=600,
+    yaxis=dict(autorange= 'reversed')
+    )
+
+    # Add value labels to the bars
+    for i, prob in enumerate(sorted_probabilities):
+      fig.add_annotation(
+        x=prob,
+        y=i,
+        text=f'{prob:.4f}',
+        showarrow= False,
+        xanchor='left',
+        xshift=5
+      )
+
+    # Display the Plotly chart
+    st.plotly_chart(fig)
+
+    saliency_map_path = f'saliency_maps/{uploaded_file.name}'
+
+    explanation = generate_explanation(saliency_map_path, result, predictions[0][class_index])
+
+    st.write("## Explanation:")
+    st.write(explanation)
+  
+  finally:
+    os.remove(tmp_path)
 
